@@ -4,7 +4,8 @@
 brightness value located at:
 `/sys/class/backlight/amdgpu_bl1/brightness`
 
-`sudo nano /usr/local/bin/get_brightness.sh`
+## Create script
+`sudo nano /usr/local/bin/apply_brightness.sh`
 ```sh
 #!/bin/bash
 
@@ -13,26 +14,27 @@ BRIGHTNESS_FILE="/sys/class/backlight/amdgpu_bl1/brightness"
 # Read the current brightness
 current_brightness=$(cat $BRIGHTNESS_FILE)
 
-# Increment by 1
-new_brightness=$((current_brightness + 1))
-
-# Write the new brightness value
-echo $new_brightness | sudo tee $BRIGHTNESS_FILE
+# Apply the current brightness value
+echo $current_brightness | sudo tee $BRIGHTNESS_FILE
 ```
-`sudo chmod +x /usr/local/bin/get_brightness.sh`
+`sudo chmod +x /usr/local/bin/apply_brightness.sh`
 
-`sudo nano /etc/systemd/system/set-brightness.service`
+## Create Service
+`sudo nano /etc/systemd/system/apply-brightness.service`
 ```sh
 [Unit]
-Description=Increment brightness on resume
+Description=Apply current brightness on suspend/resume
+After=suspend.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/increment_brightness.sh
+ExecStart=/usr/local/bin/apply_brightness.sh
 
 [Install]
-WantedBy=suspend.target
+WantedBy=sleep.target suspend.target hibernate.target hybrid-sleep.target
 ```
-`sudo systemctl daemon-reload`
-
-`sudo systemctl enable set-brightness.service`
+```
+sudo systemctl daemon-reload
+sudo systemctl enable apply-brightness.service
+sudo systemctl start apply-brightness.service
+```
